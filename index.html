@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>삶의 밸런스</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding-bottom: 60px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── D-Day Banner ── */
+    #dday-banner {
+      background: linear-gradient(135deg, #0f2a4a 0%, #1a4a7a 100%);
+      text-align: center;
+      padding: 12px 20px 10px;
+      border-bottom: 1px solid #1e3a5f;
+    }
+    #dday-banner .label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      opacity: 0.55;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    #dday-number {
+      font-size: 50px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: #60a5fa;
+    }
+    #dday-banner .sub {
+      font-size: 10px;
+      opacity: 0.45;
+      margin-top: 3px;
+    }
+
+    /* ── Bottom Tab Bar ── */
+    #tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1e293b;
+      border-top: 1px solid #2d3f55;
+      display: flex;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 0 7px;
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: color 0.15s;
+    }
+    .tab-btn .tab-icon { font-size: 18px; }
+    .tab-btn.active { color: #60a5fa; }
+
+    /* ── Views ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 10px 12px 10px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border: 1px solid #2d3f55;
+    }
+    .card-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* ── Today Header ── */
+    #today-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    #today-header .date-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      min-width: 160px;
+      text-align: center;
+    }
+    .day-nav-btn {
+      background: none;
+      border: 1px solid #2d3f55;
+      color: #64748b;
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .day-nav-btn:hover:not(:disabled) { border-color: #4a9eff; color: #60a5fa; }
+    .day-nav-btn:disabled { opacity: 0.25; cursor: default; }
+    #today-unsaved-badge {
+      display: none;
+      font-size: 10px; font-weight: 700;
+      background: #f59e0b; color: #0f172a;
+      border-radius: 999px; padding: 1px 7px;
+      margin-left: 4px;
+    }
+
+    /* ── Items ── */
+    .item-row { margin-bottom: 11px; }
+    .item-row:last-child { margin-bottom: 0; }
+    .item-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .item-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+    .item-value-display { font-size: 13px; color: #60a5fa; font-weight: 700; text-align: right; }
+    .item-score-badge {
+      display: inline-block;
+      background: #1a3a5c;
+      color: #60a5fa;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 5px;
+      padding: 1px 6px;
+      margin-left: 5px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #2d3f55;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(59,130,246,0.5);
+    }
+
+    .radio-group { display: flex; gap: 7px; }
+    .radio-group label {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      border: 2px solid #2d3f55;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #64748b;
+    }
+    .radio-group input[type="radio"] { display: none; }
+    .radio-group input[type="radio"]:checked + label {
+      border-color: #3b82f6;
+      background: #1a3a5c;
+      color: #93c5fd;
+    }
+
+    /* ── Score Card ── */
+    #score-card { text-align: center; padding: 10px 14px; }
+    #score-total { font-size: 42px; font-weight: 800; line-height: 1; color: #f1f5f9; }
+    #score-bar-wrap {
+      background: #2d3f55;
+      border-radius: 999px;
+      height: 8px;
+      margin: 10px 0 6px;
+      overflow: hidden;
+    }
+    #score-bar { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+    #score-level {
+      font-size: 16px; font-weight: 800;
+      margin-top: 6px; padding: 5px 22px;
+      border-radius: 999px; display: inline-block;
+    }
+
+    /* ── Submit Button ── */
+    #submit-btn {
+      width: 100%; padding: 13px;
+      background: #3b82f6; color: white;
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.5px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    #submit-btn:active { transform: scale(0.97); background: #1d4ed8; }
+
+    /* ── Daily View ── */
+    .day-record {
+      border-bottom: 1px solid #1e3045;
+      padding: 14px 0;
+    }
+    .day-record:last-child { border-bottom: none; }
+    .day-record-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .day-date { font-size: 14px; font-weight: 700; color: #94a3b8; }
+    .day-right { display: flex; align-items: center; gap: 10px; }
+    .day-score { font-size: 15px; font-weight: 800; color: #e2e8f0; }
+    .day-chevron { font-size: 12px; color: #475569; transition: transform 0.2s; }
+    .day-chevron.open { transform: rotate(180deg); }
+    .day-detail {
+      display: none;
+      padding-top: 12px;
+    }
+    .day-detail.open { display: block; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .detail-item {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .detail-item-name { font-size: 12px; color: #64748b; font-weight: 600; }
+    .detail-item-score {
+      font-size: 13px; font-weight: 800;
+      color: #60a5fa;
+    }
+
+    /* ── Monthly / Yearly rows ── */
+    .period-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid #1e3045;
+    }
+    .period-row:last-child { border-bottom: none; }
+    .period-label { font-size: 15px; font-weight: 700; color: #94a3b8; }
+    .period-days { font-size: 12px; color: #475569; margin-top: 2px; }
+    .period-right { display: flex; align-items: center; gap: 10px; }
+    .period-avg { font-size: 15px; font-weight: 800; color: #e2e8f0; }
+
+    /* ── Mini bar ── */
+    .mini-bar-wrap {
+      background: #2d3f55;
+      border-radius: 999px;
+      height: 5px;
+      width: 60px;
+      overflow: hidden;
+    }
+    .mini-bar { height: 100%; border-radius: 999px; }
+
+    /* ── Level badge ── */
+    .level-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px;
+    }
+    .level-great { color: #4ade80; background: #14532d; }
+    .level-good  { color: #60a5fa; background: #1e3a5f; }
+    .level-ok    { color: #fbbf24; background: #451a03; }
+    .level-care  { color: #f87171; background: #450a0a; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; color: #475569;
+      font-size: 14px; padding: 30px 0;
+    }
+
+    /* ── View title ── */
+    .view-title {
+      font-size: 18px; font-weight: 800;
+      color: #e2e8f0; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="dday-banner">
+  <div class="label">2026 · 12 · 31 까지</div>
+  <div id="dday-number">D-???</div>
+  <div class="sub" id="dday-sub"></div>
+</div>
+
+<!-- ── 오늘 뷰 ── -->
+<div id="view-today" class="view active">
+  <div class="container">
+    <div id="today-header">
+      <button class="day-nav-btn" id="btn-prev-day" onclick="shiftDay(-1)">◀</button>
+      <span class="date-label" id="today-date-label"></span>
+      <button class="day-nav-btn" id="btn-next-day" onclick="shiftDay(1)">▶</button>
+    </div>
+    <div class="card">
+      <div class="card-title">오늘의 기록</div>
+      <form id="balance-form"></form>
+    </div>
+    <div class="card" id="score-card" style="display:none;">
+      <div class="card-title">오늘의 점수</div>
+      <div id="score-total">—</div>
+      <div id="score-bar-wrap"><div id="score-bar" style="width:0%"></div></div>
+      <div id="score-level">—</div>
+    </div>
+    <button id="submit-btn" onclick="saveToday()">오늘 기록 저장</button>
+  </div>
+</div>
+
+<!-- ── 일간 뷰 ── -->
+<div id="view-daily" class="view">
+  <div class="container">
+    <div class="view-title">일간 기록</div>
+    <div class="card">
+      <div id="daily-list"><div class="empty">기록이 없어요</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 월간 뷰 ── -->
+<div id="view-monthly" class="view">
+  <div class="container">
+    <div class="view-title">월간 기록</div>
+    <div class="card">
+      <div id="monthly-list"><div class="empty">기록이 없어요</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 연간 뷰 ── -->
+<div id="view-yearly" class="view">
+  <div class="container">
+    <div class="view-title">연간 기록</div>
+    <div class="card">
+      <div id="yearly-list"><div class="empty">기록이 없어요</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Tab Bar ── -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('today', this)">
+    <span class="tab-icon">📝</span>오늘
+  </button>
+  <button class="tab-btn" onclick="switchTab('daily', this)">
+    <span class="tab-icon">📅</span>일간
+  </button>
+  <button class="tab-btn" onclick="switchTab('monthly', this)">
+    <span class="tab-icon">📊</span>월간
+  </button>
+  <button class="tab-btn" onclick="switchTab('yearly', this)">
+    <span class="tab-icon">🗓️</span>연간
+  </button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  항목 설정 — 새 항목 추가 시 여기만 수정
+// ══════════════════════════════════════════════
+const ITEMS = [
+  {
+    id: 'sleep', label: '수면', weight: 0.25,
+    type: 'range', min: 0, max: 8, step: 0.5, unit: '시간', default: 6,
+    toScore: v => {
+      if (v <= 5) return v / 5 * 40; // 0-5h → 0-40점
+      if (v <= 6) return 40 + (v - 5) * 40; // 5-6h → 40-80점
+      if (v <= 7) return 80 + (v - 6) * 10; // 6-7h → 80-90점
+      if (v <= 8) return 90 + (v - 7) * 10; // 7-8h → 90-100점
+      return 60 + Math.max(0, 100 - v * 5); // 8h+ → 60점 (과수면)
+    }
+  },
+  {
+    id: 'exercise', label: '운동', weight: 0.20,
+    type: 'range', min: 0, max: 60, step: 5, unit: '분', default: 0,
+    toScore: v => {
+      if (v <= 0) return 0;
+      if (v <= 15) return v / 15 * 40; // 0-15m → 0-40점
+      if (v <= 30) return 40 + (v - 15) / 15 * 30; // 15-30m → 40-70점
+      if (v <= 45) return 70 + (v - 30) / 15 * 20; // 30-45m → 70-90점
+      return 90 + Math.min(10, (v - 45) / 15 * 10); // 45m+ → 90-100점
+    }
+  },
+  {
+    id: 'diet', label: '식사 칼로리', weight: 0.15,
+    type: 'radio', options: ['낮음', '보통', '높음'], default: '보통',
+    toScore: v => ({ '낮음': 40, '보통': 85, '높음': 20 }[v] ?? 40)
+  },
+  {
+    id: 'stress', label: '스트레스', weight: 0.20,
+    type: 'range', min: 0, max: 100, step: 10, unit: '점', default: 50,
+    toScore: v => Math.max(0, 100 - v) // 역점수: 0 → 100점, 100 → 0점
+  },
+  {
+    id: 'mindfulness', label: '마음챙김', weight: 0.12,
+    type: 'range', min: 0, max: 20, step: 1, unit: '분', default: 0,
+    toScore: v => {
+      if (v <= 0) return 0;
+      if (v <= 5) return v / 5 * 30;
+      if (v <= 10) return 30 + (v - 5) / 5 * 35;
+      return 65 + Math.min(35, (v - 10) / 10 * 35);
+    }
+  },
+  {
+    id: 'future', label: '미래준비', weight: 0.08,
+    type: 'range', min: 0, max: 60, step: 5, unit: '분', default: 0,
+    toScore: v => {
+      if (v <= 0) return 0;
+      if (v <= 15) return v / 15 * 30;
+      if (v <= 30) return 30 + (v - 15) / 15 * 30;
+      return 60 + Math.min(40, (v - 30) / 30 * 40);
+    }
+  },
+];
+
+const TARGET_DATE = new Date('2026-12-31T00:00:00');
+const MAX_SCORE   = 100;
+const STORAGE_KEY = 'life-balance-records';
+
+// ── 레벨 (100점 기준) ──
+function getLevel(score) {
+  if (score >= 90) return { label: '⭐⭐⭐⭐⭐ 탁월', cls: 'level-great', color: '#22c55e' };
+  if (score >= 80) return { label: '⭐⭐⭐⭐ 우수', cls: 'level-great', color: '#22c55e' };
+  if (score >= 70) return { label: '⭐⭐⭐ 양호', cls: 'level-good',  color: '#3b82f6' };
+  if (score >= 60) return { label: '⭐⭐ 보통', cls: 'level-ok', color: '#f59e0b' };
+  if (score >= 50) return { label: '⭐ 미흡', cls: 'level-care', color: '#f87171' };
+  return             { label: '위험', cls: 'level-care', color: '#ef4444' };
+}
+
+function kstNow() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst;
+}
+
+function todayKey() {
+  const d = kstNow();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+// ── D-Day ──
+function updateDday() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const diff = Math.ceil((TARGET_DATE - now) / 86400000);
+  document.getElementById('dday-number').textContent =
+    diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`;
+  document.getElementById('dday-sub').textContent =
+    `${TARGET_DATE.getFullYear()}년 ${TARGET_DATE.getMonth()+1}월 ${TARGET_DATE.getDate()}일`;
+}
+
+// ── 탭 전환 ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'daily')   renderDaily();
+  if (name === 'monthly') renderMonthly();
+  if (name === 'yearly')  renderYearly();
+}
+
+// ── 폼 생성 ──
+function buildForm() {
+  const form = document.getElementById('balance-form');
+  form.innerHTML = '';
+  ITEMS.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+
+    const labelRow = document.createElement('div');
+    labelRow.className = 'item-label-row';
+    const defVal = item.type === 'radio' ? item.default : item.default;
+    labelRow.innerHTML = `
+      <span class="item-name">${item.label}</span>
+      <span class="item-value-display" id="val-${item.id}">
+        ${item.type === 'radio' ? defVal : defVal + (item.unit||'')}
+        <span class="item-score-badge" id="sc-${item.id}">${item.toScore(defVal)}점</span>
+      </span>`;
+    row.appendChild(labelRow);
+
+    if (item.type === 'range') {
+      const input = document.createElement('input');
+      Object.assign(input, { type:'range', id:`input-${item.id}`, min:item.min, max:item.max, step:item.step, value:item.default });
+      input.addEventListener('input', () => {
+        const v = parseFloat(input.value);
+        document.getElementById(`val-${item.id}`).childNodes[0].textContent = v + item.unit + ' ';
+        document.getElementById(`sc-${item.id}`).textContent = item.toScore(v) + '점';
+        updateScore();
+      });
+      row.appendChild(input);
+    } else if (item.type === 'radio') {
+      const group = document.createElement('div');
+      group.className = 'radio-group';
+      item.options.forEach(opt => {
+        const inp = document.createElement('input');
+        Object.assign(inp, { type:'radio', name:`radio-${item.id}`, id:`radio-${item.id}-${opt}`, value:opt });
+        if (opt === item.default) inp.checked = true;
+        inp.addEventListener('change', () => {
+          document.getElementById(`val-${item.id}`).childNodes[0].textContent = opt + ' ';
+          document.getElementById(`sc-${item.id}`).textContent = item.toScore(opt) + '점';
+          updateScore();
+        });
+        const lbl = document.createElement('label');
+        lbl.htmlFor = inp.id;
+        lbl.textContent = opt;
+        group.appendChild(inp);
+        group.appendChild(lbl);
+      });
+      row.appendChild(group);
+    }
+    form.appendChild(row);
+  });
+}
+
+function readValues() {
+  return ITEMS.map(item => {
+    if (item.type === 'range') return parseFloat(document.getElementById(`input-${item.id}`).value);
+    const checked = document.querySelector(`input[name="radio-${item.id}"]:checked`);
+    return checked ? checked.value : item.default;
+  });
+}
+
+function updateScore() {
+  const vals = readValues();
+
+  // 각 항목의 점수 계산
+  const itemScores = ITEMS.map((item, i) => item.toScore(vals[i]));
+
+  // 가중치 적용한 총점 계산
+  const total = Math.round(
+    ITEMS.reduce((sum, item, i) => {
+      return sum + (itemScores[i] * item.weight);
+    }, 0)
+  );
+
+  const level = getLevel(total);
+
+  // 점수 카드 표시
+  document.getElementById('score-card').style.display = 'block';
+
+  // 점수 표시 (0-100점으로 정규화)
+  document.getElementById('score-total').innerHTML =
+    `${total}<span style="font-size:20px;color:#475569;font-weight:500">점</span>`;
+  document.getElementById('score-bar').style.width      = (total / MAX_SCORE * 100) + '%';
+  document.getElementById('score-bar').style.background = level.color;
+
+  const el = document.getElementById('score-level');
+  el.textContent = level.label;
+  el.className   = `level-badge ${level.cls}`;
+  el.style.cssText = 'font-size:18px;font-weight:800;margin-top:12px;padding:8px 28px;border-radius:999px;display:inline-block;';
+}
+
+// ── 일간 렌더 ──
+function renderDaily() {
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const keys    = Object.keys(records).sort().reverse();
+  const list    = document.getElementById('daily-list');
+  if (!keys.length) { list.innerHTML = '<div class="empty">기록이 없어요</div>'; return; }
+
+  list.innerHTML = keys.map(k => {
+    const r     = records[k];
+    const level = getLevel(r.total);
+    const [y,m,d] = k.split('-');
+    const dateStr = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
+    const detailHtml = ITEMS.map((item, i) => `
+      <div class="detail-item">
+        <span class="detail-item-name">${item.label}</span>
+        <span class="detail-item-score">${Math.round(r.scores[i] ?? 0)}점</span>
+      </div>`).join('');
+    return `
+      <div class="day-record">
+        <div class="day-record-header" onclick="toggleDetail('${k}')">
+          <div>
+            <div class="day-date">${dateStr}</div>
+          </div>
+          <div class="day-right">
+            <span class="level-badge ${level.cls}">${r.level}</span>
+            <span class="day-score">${r.total}점</span>
+            <span class="day-chevron" id="chev-${k}">▼</span>
+          </div>
+        </div>
+        <div class="day-detail" id="detail-${k}">
+          <div class="detail-grid">${detailHtml}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleDetail(k) {
+  const el   = document.getElementById(`detail-${k}`);
+  const chev = document.getElementById(`chev-${k}`);
+  const open = el.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+// ── 월간 렌더 ──
+function renderMonthly() {
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const byMonth = {};
+  Object.entries(records).forEach(([k, r]) => {
+    const month = k.slice(0, 7);
+    if (!byMonth[month]) byMonth[month] = { total: 0, count: 0 };
+    byMonth[month].total += r.total;
+    byMonth[month].count++;
+  });
+
+  const list = document.getElementById('monthly-list');
+  const keys = Object.keys(byMonth).sort().reverse();
+  if (!keys.length) { list.innerHTML = '<div class="empty">기록이 없어요</div>'; return; }
+
+  list.innerHTML = keys.map(m => {
+    const { total, count } = byMonth[m];
+    const avg   = Math.round(total / count);
+    const level = getLevel(avg);
+    const [y, mo] = m.split('-');
+    return `
+      <div class="period-row">
+        <div>
+          <div class="period-label">${y}년 ${parseInt(mo)}월</div>
+          <div class="period-days">${count}일 기록</div>
+        </div>
+        <div class="period-right">
+          <div>
+            <div class="mini-bar-wrap">
+              <div class="mini-bar" style="width:${avg}%;background:${level.color}"></div>
+            </div>
+          </div>
+          <span class="period-avg">${avg}점</span>
+          <span class="level-badge ${level.cls}">${level.label}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── 연간 렌더 ──
+function renderYearly() {
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const byYear  = {};
+  Object.entries(records).forEach(([k, r]) => {
+    const year = k.slice(0, 4);
+    if (!byYear[year]) byYear[year] = { total: 0, count: 0 };
+    byYear[year].total += r.total;
+    byYear[year].count++;
+  });
+
+  const list = document.getElementById('yearly-list');
+  const keys = Object.keys(byYear).sort().reverse();
+  if (!keys.length) { list.innerHTML = '<div class="empty">기록이 없어요</div>'; return; }
+
+  list.innerHTML = keys.map(y => {
+    const { total, count } = byYear[y];
+    const avg   = Math.round(total / count);
+    const level = getLevel(avg);
+    return `
+      <div class="period-row">
+        <div>
+          <div class="period-label">${y}년</div>
+          <div class="period-days">${count}일 기록</div>
+        </div>
+        <div class="period-right">
+          <div>
+            <div class="mini-bar-wrap" style="width:80px">
+              <div class="mini-bar" style="width:${avg}%;background:${level.color}"></div>
+            </div>
+          </div>
+          <span class="period-avg">${avg}점</span>
+          <span class="level-badge ${level.cls}">${level.label}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── 날짜 키 → Date ──
+function keyToDate(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function dateToKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+let currentViewKey = todayKey();
+
+// ── Today 헤더 ──
+function renderTodayHeader() {
+  const key   = currentViewKey;
+  const today = todayKey();
+  const d     = keyToDate(key);
+  const day   = ['일','월','화','수','목','금','토'][d.getDay()];
+  const label = key === today
+    ? `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${day}) 오늘`
+    : `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${day})`;
+  document.getElementById('today-date-label').textContent = label;
+  document.getElementById('btn-next-day').disabled = (key >= today);
+}
+
+// ── 날짜 이동 ──
+function shiftDay(delta) {
+  const d = keyToDate(currentViewKey);
+  d.setDate(d.getDate() + delta);
+  const newKey = dateToKey(d);
+  if (newKey > todayKey()) return;
+  currentViewKey = newKey;
+  renderTodayHeader();
+  loadDateData(currentViewKey);
+}
+
+// ── 저장된 데이터로 폼 채우기 ──
+function loadDateData(key) {
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const rec = records[key];
+  ITEMS.forEach((item, i) => {
+    const val = rec ? rec.vals[i] : item.default;
+    if (item.type === 'range') {
+      const input = document.getElementById(`input-${item.id}`);
+      if (input) {
+        input.value = val;
+        document.getElementById(`val-${item.id}`).childNodes[0].textContent = val + item.unit + ' ';
+        document.getElementById(`sc-${item.id}`).textContent = item.toScore(val) + '점';
+      }
+    } else if (item.type === 'radio') {
+      const radio = document.querySelector(`input[name="radio-${item.id}"][value="${val}"]`);
+      if (radio) {
+        radio.checked = true;
+        document.getElementById(`val-${item.id}`).childNodes[0].textContent = val + ' ';
+        document.getElementById(`sc-${item.id}`).textContent = item.toScore(val) + '점';
+      }
+    }
+  });
+  updateScore();
+}
+
+function saveToday() {
+  const key = currentViewKey;
+  const vals = readValues();
+  const itemScores = ITEMS.map((item, i) => item.toScore(vals[i]));
+
+  // 가중치 적용한 총점 계산
+  const total = Math.round(
+    ITEMS.reduce((sum, item, i) => {
+      return sum + (itemScores[i] * item.weight);
+    }, 0)
+  );
+
+  const level = getLevel(total);
+  const records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  records[key] = { vals, scores: itemScores, total, level: level.label };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  alert(`✅ ${key} 저장!\n총점 ${total}점 — ${level.label}`);
+}
+
+// ── Init ──
+updateDday();
+renderTodayHeader();
+buildForm();
+loadDateData(currentViewKey);
+</script>
+</body>
+</html>
